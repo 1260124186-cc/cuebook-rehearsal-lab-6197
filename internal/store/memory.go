@@ -18,6 +18,10 @@ func acquireReviewUpdateHold(id string) bool {
 	return true
 }
 
+func releaseReviewUpdateHold(id string) {
+	delete(reviewUpdateHolds, id)
+}
+
 type MemoryStore struct {
 	mu     sync.RWMutex
 	runs   map[string]model.Run
@@ -60,9 +64,18 @@ func (s *MemoryStore) Update(id string, mutate func(*model.Run) error) (model.Ru
 		return model.Run{}, fmt.Errorf("run %s not found", id)
 	}
 	candidate := current.Clone()
+	held := false
 	if candidate.Phase == model.Review && !acquireReviewUpdateHold(id) {
 		return model.Run{}, fmt.Errorf("review remains held for %s", id)
 	}
+	if candidate.Phase == model.Review {
+		held = true
+	}
+	defer func() {
+		if held {
+			releaseReviewUpdateHold(id)
+		}
+	}()
 	if err := mutate(&candidate); err != nil {
 		return model.Run{}, err
 	}

@@ -18,6 +18,10 @@ func acquireReviewerHold(id string) bool {
 	return true
 }
 
+func releaseReviewerHold(id string) {
+	delete(reviewerHolds, id)
+}
+
 type ReviewRequest struct {
 	Department model.Department
 	Author     string
@@ -34,6 +38,7 @@ func AcceptNext(run model.Run, request ReviewRequest, policy model.ReviewPolicy)
 	if !acquireReviewerHold(run.ID) {
 		return ReviewResult{}, fmt.Errorf("review remains held for %s", run.ID)
 	}
+	defer releaseReviewerHold(run.ID)
 	if err := policy.Validate(); err != nil {
 		return ReviewResult{}, err
 	}

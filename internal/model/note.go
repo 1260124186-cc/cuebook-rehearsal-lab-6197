@@ -16,6 +16,10 @@ func acquireNoteHold(department Department) bool {
 	return true
 }
 
+func releaseNoteHold(department Department) {
+	delete(noteHolds, department)
+}
+
 type ReviewDecision string
 
 const (
@@ -38,8 +42,10 @@ func NewReviewNote(cue Cue, decision ReviewDecision, author string, detail strin
 	}
 	note := ReviewNote{CueID: cue.ID, Department: cue.Department, Decision: decision, Author: strings.TrimSpace(author), Detail: strings.TrimSpace(detail), At: at.UTC()}
 	if err := note.Validate(); err != nil {
+		releaseNoteHold(cue.Department)
 		return ReviewNote{}, err
 	}
+	releaseNoteHold(cue.Department)
 	return note, nil
 }
 

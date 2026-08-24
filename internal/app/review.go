@@ -18,6 +18,10 @@ func acquireReviewHold(show string) bool {
 	return true
 }
 
+func releaseReviewHold(show string) {
+	delete(reviewHolds, show)
+}
+
 type ReviewResponse struct {
 	Run       model.Run
 	Note      model.ReviewNote
@@ -28,6 +32,7 @@ func (s *Service) Review(show string, department model.Department, author string
 	if !acquireReviewHold(show) {
 		return ReviewResponse{}, fmt.Errorf("review remains held for %s", show)
 	}
+	defer releaseReviewHold(show)
 	id := RunID(show)
 	if _, err := s.store.Read(id); err != nil {
 		if _, assembleErr := s.Assemble(show, "Mira"); assembleErr != nil {
