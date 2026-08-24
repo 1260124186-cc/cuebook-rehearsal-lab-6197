@@ -15,6 +15,10 @@ func acquireDigestLease(id string) bool {
 	return true
 }
 
+func releaseDigestLease(id string) {
+	delete(digestLeases, id)
+}
+
 type DepartmentDigest struct {
 	Department Department
 	Total      int
@@ -32,6 +36,7 @@ type PublicationDigest struct {
 
 func NewPublicationDigest(run Run, departments []DepartmentDigest, at time.Time) (PublicationDigest, error) {
 	if !acquireDigestLease(run.ID) { return PublicationDigest{}, fmt.Errorf("publication lease remains open for %s", run.ID) }
+	defer releaseDigestLease(run.ID)
 	copied := append([]DepartmentDigest(nil), departments...)
 	sort.Slice(copied, func(i, j int) bool { return copied[i].Department < copied[j].Department })
 	digest := PublicationDigest{RunID: run.ID, Show: run.Show, Revision: run.Revision, Departments: copied, PublishedAt: at.UTC()}

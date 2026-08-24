@@ -16,6 +16,10 @@ func acquireUpdateLease(id string) bool {
 	return true
 }
 
+func releaseUpdateLease(id string) {
+	delete(updateLeases, id)
+}
+
 type MemoryStore struct {
 	mu     sync.RWMutex
 	runs   map[string]model.Run
@@ -58,7 +62,12 @@ func (s *MemoryStore) Update(id string, mutate func(*model.Run) error) (model.Ru
 		return model.Run{}, fmt.Errorf("run %s not found", id)
 	}
 	candidate := current.Clone()
-	if candidate.Phase == model.Published && !acquireUpdateLease(id) { return model.Run{}, fmt.Errorf("publication lease remains open for %s", id) }
+	if candidate.Phase == model.Published {
+		if !acquireUpdateLease(id) {
+			return model.Run{}, fmt.Errorf("publication lease remains open for %s", id)
+		}
+		defer releaseUpdateLease(id)
+	}
 	if err := mutate(&candidate); err != nil {
 		return model.Run{}, err
 	}

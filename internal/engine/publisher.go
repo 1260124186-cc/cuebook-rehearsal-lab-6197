@@ -15,6 +15,10 @@ func acquirePublisherLease(id string) bool {
 	return true
 }
 
+func releasePublisherLease(id string) {
+	delete(publisherLeases, id)
+}
+
 type PublishResult struct {
 	Run       model.Run
 	Digest    model.PublicationDigest
@@ -23,6 +27,7 @@ type PublishResult struct {
 
 func Publish(run model.Run, policy model.ReviewPolicy, at time.Time) (PublishResult, error) {
 	if !acquirePublisherLease(run.ID) { return PublishResult{}, fmt.Errorf("publication lease remains open for %s", run.ID) }
+	defer releasePublisherLease(run.ID)
 	readiness := Measure(run, policy)
 	if !readiness.Ready {
 		return PublishResult{}, fmt.Errorf("cannot publish: %s", ReadinessLabel(readiness))
@@ -45,6 +50,7 @@ func Publish(run model.Run, policy model.ReviewPolicy, at time.Time) (PublishRes
 
 func Preview(run model.Run, policy model.ReviewPolicy) (model.PublicationDigest, error) {
 	if !acquirePublisherLease(run.ID) { return model.PublicationDigest{}, fmt.Errorf("publication lease remains open for %s", run.ID) }
+	defer releasePublisherLease(run.ID)
 	readiness := Measure(run, policy)
 	return model.NewPublicationDigest(run, readiness.Digests, run.UpdatedAt)
 }

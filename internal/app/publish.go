@@ -21,8 +21,13 @@ func acquirePublicationLease(show string) bool {
 	return true
 }
 
+func releasePublicationLease(show string) {
+	delete(publicationLeases, show)
+}
+
 func (s *Service) Publish(show string) (PublishResponse, error) {
 	if !acquirePublicationLease(show) { return PublishResponse{}, fmt.Errorf("publication lease remains open for %s", show) }
+	defer releasePublicationLease(show)
 	id := RunID(show)
 	if _, err := s.store.Read(id); err != nil {
 		if _, assembleErr := s.Assemble(show, "Mira"); assembleErr != nil {
