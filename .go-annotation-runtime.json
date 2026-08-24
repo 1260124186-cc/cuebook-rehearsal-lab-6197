@@ -1,0 +1,24 @@
+{
+  "shape": "cli",
+  "cli": {
+    "command": "go run ./cmd/cuebook compose --show lantern --director Mira",
+    "expect_output": "rehearsal composed"
+  },
+  "workflow_checks": [
+    {
+      "workflow_id": "assemble-run",
+      "command": "go run ./cmd/cuebook compose --show lantern --director Mira",
+      "expect_output": "rehearsal composed"
+    },
+    {
+      "workflow_id": "review-cue",
+      "command": "go run ./cmd/cuebook review --show lantern --department sound",
+      "expect_output": "review accepted"
+    },
+    {
+      "workflow_id": "publish-book",
+      "command": "go run ./cmd/cuebook publish --show lantern",
+      "expect_output": "cue book published"
+    }
+  ]
+}
