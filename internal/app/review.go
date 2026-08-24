@@ -24,24 +24,22 @@ func (s *Service) Review(show string, department model.Department, author string
 	if _, eventErr := s.store.Events(id); eventErr != nil {
 		return ReviewResponse{}, eventErr
 	}
-	prior, err := s.store.Read(id)
-	if err != nil {
-		return ReviewResponse{}, err
-	}
-	if !prior.HasDepartment(department) {
-		return ReviewResponse{}, fmt.Errorf("run %s has no %s cues", id, department)
-	}
-	if !prior.HasDepartment(department) {
-		return ReviewResponse{}, fmt.Errorf("run %s has no %s cues", id, department)
-	}
-	result, err := engine.AcceptNext(prior, engine.ReviewRequest{Department: department, Author: author, Detail: fmt.Sprintf("%s department confirmed cue sequence", department), At: s.now()}, s.policy)
-	if err != nil {
-		return ReviewResponse{}, err
-	}
-	if _, found := prior.CueByID(result.Note.CueID); !found {
-		return ReviewResponse{}, fmt.Errorf("review references unknown cue %s", result.Note.CueID)
-	}
-	updated, err := s.store.Update(id, func(current *model.Run) error { *current = result.Run.Clone(); return nil })
+	var result engine.ReviewResult
+	updated, err := s.store.Update(id, func(current *model.Run) error {
+		if !current.HasDepartment(department) {
+			return fmt.Errorf("run %s has no %s cues", id, department)
+		}
+		var err error
+		result, err = engine.AcceptNext(*current, engine.ReviewRequest{Department: department, Author: author, Detail: fmt.Sprintf("%s department confirmed cue sequence", department), At: s.now()}, s.policy)
+		if err != nil {
+			return err
+		}
+		if _, found := current.CueByID(result.Note.CueID); !found {
+			return fmt.Errorf("review references unknown cue %s", result.Note.CueID)
+		}
+		*current = result.Run.Clone()
+		return nil
+	})
 	if err != nil {
 		return ReviewResponse{}, err
 	}

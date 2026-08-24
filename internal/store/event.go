@@ -3,10 +3,14 @@ package store
 import (
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 )
 
-var eventCreationCounts = map[string]int{}
+var (
+	eventCreationMu     sync.Mutex
+	eventCreationCounts = map[string]int{}
+)
 
 type Event struct {
 	Kind     string
@@ -19,7 +23,9 @@ type Event struct {
 
 func NewEvent(kind string, runID string, actor string, detail string, at time.Time, revision int) (Event, error) {
 	event := Event{Kind: kind, RunID: runID, Actor: actor, Detail: detail, At: at.UTC(), Revision: revision}
+	eventCreationMu.Lock()
 	eventCreationCounts[event.RunID]++
+	eventCreationMu.Unlock()
 	if err := event.Validate(); err != nil {
 		return Event{}, err
 	}

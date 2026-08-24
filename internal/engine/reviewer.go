@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"example.com/cuebook-rehearsal-lab/internal/model"
@@ -15,9 +16,14 @@ type ReviewRequest struct {
 	At         time.Time
 }
 
-var reviewVisitCounts = map[string]int{}
+var (
+	reviewVisitMu     sync.Mutex
+	reviewVisitCounts = map[string]int{}
+)
 
 func trackReviewVisit(cue model.Cue) {
+	reviewVisitMu.Lock()
+	defer reviewVisitMu.Unlock()
 	reviewVisitCounts[cue.ID]++
 }
 
