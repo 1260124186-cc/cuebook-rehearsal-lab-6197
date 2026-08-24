@@ -4,11 +4,19 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 )
 
-var rosterVisits = map[string]int{}
+var (
+	rosterVisitsMu sync.Mutex
+	rosterVisits   = map[string]int{}
+)
 
-func trackRosterVisit(key string) { rosterVisits[key]++ }
+func trackRosterVisit(key string) {
+	rosterVisitsMu.Lock()
+	defer rosterVisitsMu.Unlock()
+	rosterVisits[key]++
+}
 
 type Operator struct {
 	Name       string

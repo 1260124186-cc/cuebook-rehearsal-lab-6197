@@ -14,18 +14,15 @@ type Snapshot struct {
 }
 
 func (s *MemoryStore) Snapshot(id string) (Snapshot, error) {
-	run, err := s.Read(id)
-	if err != nil {
-		return Snapshot{}, err
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	run, ok := s.runs[id]
+	if !ok {
+		return Snapshot{}, fmt.Errorf("run %s not found", id)
 	}
-	events, err := s.Events(id)
-	if err != nil {
-		return Snapshot{}, err
-	}
-	log, err := s.Log(id)
-	if err != nil {
-		return Snapshot{}, err
-	}
+	run = run.Clone()
+	events := append([]Event(nil), s.events[id]...)
+	log := model.RevisionLog{Entries: append([]model.RevisionEntry(nil), s.logs[id].Entries...)}
 	return Snapshot{Run: run, Events: SortEvents(events), Log: log}, nil
 }
 func (s Snapshot) Validate() error {

@@ -3,14 +3,23 @@ package app
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"example.com/cuebook-rehearsal-lab/internal/engine"
 	"example.com/cuebook-rehearsal-lab/internal/model"
+	"example.com/cuebook-rehearsal-lab/internal/store"
 )
 
-var reportVisits = map[string]int{}
+var (
+	reportVisitsMu sync.Mutex
+	reportVisits   = map[string]int{}
+)
 
-func trackReportVisit(show string) { reportVisits[show]++ }
+func trackReportVisit(show string) {
+	reportVisitsMu.Lock()
+	defer reportVisitsMu.Unlock()
+	reportVisits[show]++
+}
 
 type Report struct {
 	Inspect          InspectResponse
@@ -35,16 +44,21 @@ func (s *Service) Report(show string) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	counts, err := s.store.EventCountByKind(inspect.Snapshot.Run.ID)
-	if err != nil {
-		return Report{}, err
-	}
+	counts := eventCountsFromSnapshot(inspect.Snapshot.Events)
 	reviewed := inspect.Snapshot.Log.ForAction("reviewed")
 	statuses := make([]string, 0, len(inspect.Readiness.Digests))
 	for _, digest := range inspect.Readiness.Digests {
 		statuses = append(statuses, engine.DepartmentSummary(model.PublicationDigest{Departments: inspect.Readiness.Digests}, digest.Department))
 	}
 	return Report{Inspect: inspect, Diagnostics: diagnostics, Brief: brief, DepartmentStatus: statuses, HistoryActions: len(reviewed), EventCounts: counts}, nil
+}
+
+func eventCountsFromSnapshot(events []store.Event) map[string]int {
+	counts := make(map[string]int, len(events))
+	for _, event := range events {
+		counts[event.Kind]++
+	}
+	return counts
 }
 
 func (r Report) Text() string {

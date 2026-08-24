@@ -4,14 +4,22 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"example.com/cuebook-rehearsal-lab/internal/model"
 )
 
-var diagnosticVisits = map[string]int{}
+var (
+	diagnosticVisitsMu sync.Mutex
+	diagnosticVisits   = map[string]int{}
+)
 
-func trackDiagnosticVisit(id string) { diagnosticVisits[id]++ }
+func trackDiagnosticVisit(id string) {
+	diagnosticVisitsMu.Lock()
+	defer diagnosticVisitsMu.Unlock()
+	diagnosticVisits[id]++
+}
 
 type Diagnostics struct {
 	TotalDuration      time.Duration

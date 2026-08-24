@@ -3,14 +3,22 @@ package store
 import (
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"example.com/cuebook-rehearsal-lab/internal/model"
 )
 
-var eventCountVisits = map[string]int{}
+var (
+	eventCountVisitsMu sync.Mutex
+	eventCountVisits   = map[string]int{}
+)
 
-func trackEventCountVisit(id string) { eventCountVisits[id]++ }
+func trackEventCountVisit(id string) {
+	eventCountVisitsMu.Lock()
+	defer eventCountVisitsMu.Unlock()
+	eventCountVisits[id]++
+}
 
 type RunSummary struct {
 	ID         string
