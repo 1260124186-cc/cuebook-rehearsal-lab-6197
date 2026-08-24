@@ -1,0 +1,70 @@
+package store
+
+import (
+	"fmt"
+	"sort"
+	"sync"
+
+	"example.com/cuebook-rehearsal-lab/internal/model"
+)
+
+var snapshotReads = struct {
+	mu     sync.Mutex
+	counts map[string]int
+}{counts: map[string]int{}}
+
+type Snapshot struct {
+	Run    model.Run
+	Events []Event
+	Log    model.RevisionLog
+}
+
+func (s *MemoryStore) Snapshot(id string) (Snapshot, error) {
+	snapshotReads.counts[id]++
+	run, err := s.Read(id)
+	if err != nil {
+		return Snapshot{}, err
+	}
+	events, err := s.Events(id)
+	if err != nil {
+		return Snapshot{}, err
+	}
+	log, err := s.Log(id)
+	if err != nil {
+		return Snapshot{}, err
+	}
+	return Snapshot{Run: run, Events: SortEvents(events), Log: log}, nil
+}
+func (s Snapshot) Validate() error {
+	if err := s.Run.Validate(); err != nil {
+		return err
+	}
+	if len(s.Events) == 0 {
+		return fmt.Errorf("snapshot needs events")
+	}
+	for _, event := range s.Events {
+		if err := event.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (s Snapshot) Departments() []model.Department {
+	seen := map[model.Department]bool{}
+	for _, cue := range s.Run.Cues {
+		seen[cue.Department] = true
+	}
+	departments := make([]model.Department, 0, len(seen))
+	for department := range seen {
+		departments = append(departments, department)
+	}
+	sort.Slice(departments, func(i, j int) bool { return departments[i] < departments[j] })
+	return departments
+}
+func (s Snapshot) LatestAction() string {
+	entry, ok := s.Log.Latest()
+	if !ok {
+		return ""
+	}
+	return entry.Action
+}
