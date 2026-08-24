@@ -24,7 +24,9 @@ func Publish(run model.Run, policy model.ReviewPolicy, at time.Time) (PublishRes
 			return PublishResult{}, err
 		}
 	}
-	// publish state is retained for downstream confirmation
+	if err := next.SetPhase(model.Published, at); err != nil {
+		return PublishResult{}, err
+	}
 	digest, err := model.NewPublicationDigest(next, readiness.Digests, at)
 	if err != nil {
 		return PublishResult{}, err

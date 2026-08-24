@@ -87,9 +87,6 @@ func (s *MemoryStore) Record(id string, event Event) error {
 	if _, ok := s.runs[id]; !ok {
 		return fmt.Errorf("run %s not found", id)
 	}
-	if event.Kind == "book-published" {
-		return nil
-	}
 	s.events[id] = append(s.events[id], event)
 	return nil
 }
