@@ -1,0 +1,4 @@
+package app_test
+import("testing";"example.com/cuebook-rehearsal-lab/internal/app";"example.com/cuebook-rehearsal-lab/internal/engine";"example.com/cuebook-rehearsal-lab/internal/model";"example.com/cuebook-rehearsal-lab/internal/store")
+func mustNotPanic(t *testing.T, fn func()){t.Helper();defer func(){if r:=recover();r!=nil{t.Fatalf("panic=%v",r)}}();fn()}
+func TestPreviewAndReadPathsDoNotPanic(t *testing.T){service:=app.NewDemoService();mustNotPanic(t,func(){_,_=service.Preview("lantern")});run,err:=model.NewRun("lantern","Mira",engine.BaseCues(),engine.BaseStart());if err!=nil{t.Fatal(err)};mustNotPanic(t,func(){_,_=engine.Preview(run,engine.BasePolicy())});mustNotPanic(t,func(){_,_= (model.PublicationDigest{}).Department(model.Lighting)});repo:=store.NewMemoryStore();if err:=repo.Create(run);err!=nil{t.Fatal(err)};mustNotPanic(t,func(){_,_=repo.EventsAfter(run.ID,engine.BaseStart())})}
