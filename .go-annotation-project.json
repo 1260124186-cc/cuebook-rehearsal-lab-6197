@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "name": "cuebook-rehearsal-lab",
+  "summary": "为现场演出排练团队准备可追溯提示摘要的本地流程服务",
+  "user_roles": [
+    "舞台监督",
+    "部门负责人",
+    "场记",
+    "报幕执行者"
+  ],
+  "entities": [
+    "排练运行",
+    "提示",
+    "复核记录",
+    "发布摘要"
+  ],
+  "workflows": [
+    {
+      "id": "assemble-run",
+      "name": "组装排练运行",
+      "actor": "舞台监督",
+      "entry": "cuebook compose",
+      "steps": [
+        "校验节目和导演标识",
+        "加载跨部门基础提示",
+        "规划执行顺序并进入复核阶段"
+      ],
+      "success": "输出包含提示数量的已创建运行",
+      "failure": "节目名缺失或提示无效时返回错误",
+      "verification": "执行 compose 命令并检查创建输出"
+    },
+    {
+      "id": "review-cue",
+      "name": "复核部门提示",
+      "actor": "部门负责人",
+      "entry": "cuebook review",
+      "steps": [
+        "查找部门待处理提示",
+        "记录接受结论和说明",
+        "刷新修订并追加审计事件"
+      ],
+      "success": "输出部门已接受的提示",
+      "failure": "未知部门或锁定运行返回错误",
+      "verification": "执行 review 命令并检查接受输出"
+    },
+    {
+      "id": "publish-book",
+      "name": "发布演出提示摘要",
+      "actor": "报幕执行者",
+      "entry": "cuebook publish",
+      "steps": [
+        "计算跨部门就绪度",
+        "校验关键提示覆盖",
+        "锁定运行并形成摘要"
+      ],
+      "success": "输出已发布的提示摘要",
+      "failure": "未完成复核时返回错误",
+      "verification": "执行 publish 命令并检查发布输出"
+    }
+  ],
+  "module_plan": [
+    {
+      "package": "internal/model",
+      "workflow_ids": [
+        "assemble-run",
+        "review-cue",
+        "publish-book"
+      ]
+    },
+    {
+      "package": "internal/engine",
+      "workflow_ids": [
+        "assemble-run",
+        "review-cue",
+        "publish-book"
+      ]
+    },
+    {
+      "package": "internal/app",
+      "workflow_ids": [
+        "assemble-run",
+        "review-cue",
+        "publish-book"
+      ]
+    },
+    {
+      "package": "internal/store",
+      "workflow_ids": [
+        "review-cue",
+        "publish-book"
+      ]
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "compose command",
+      "workflow_ids": [
+        "assemble-run"
+      ]
+    },
+    {
+      "name": "review command",
+      "workflow_ids": [
+        "review-cue"
+      ]
+    },
+    {
+      "name": "publish command",
+      "workflow_ids": [
+        "publish-book"
+      ]
+    },
+    {
+      "name": "inspect command",
+      "workflow_ids": [
+        "assemble-run",
+        "review-cue",
+        "publish-book"
+      ]
+    }
+  ]
+}
