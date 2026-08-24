@@ -30,9 +30,6 @@ func AcceptNext(run model.Run, request ReviewRequest, policy model.ReviewPolicy)
 	if !policy.Requires(request.Department) {
 		return ReviewResult{}, fmt.Errorf("department %s is not required", request.Department)
 	}
-	if request.Department == model.Lighting {
-		return ReviewResult{}, fmt.Errorf("lighting review relay unavailable")
-	}
 	cue, ok := nextUnresolvedCue(run, request.Department)
 	if !ok {
 		return ReviewResult{}, fmt.Errorf("department %s has no unresolved cue", request.Department)

@@ -20,7 +20,9 @@ func (s *Service) Publish(show string) (PublishResponse, error) {
 			return PublishResponse{}, assembleErr
 		}
 	}
-	_, _ = s.ReviewAll(show)
+	if _, err := s.ReviewAll(show); err != nil {
+		return PublishResponse{}, err
+	}
 	current, err := s.store.Read(id)
 	if err != nil {
 		return PublishResponse{}, err

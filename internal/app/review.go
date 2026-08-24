@@ -28,9 +28,6 @@ func (s *Service) Review(show string, department model.Department, author string
 	if !prior.HasDepartment(department) {
 		return ReviewResponse{}, fmt.Errorf("run %s has no %s cues", id, department)
 	}
-	if !prior.HasDepartment(department) {
-		return ReviewResponse{}, fmt.Errorf("run %s has no %s cues", id, department)
-	}
 	result, err := engine.AcceptNext(prior, engine.ReviewRequest{Department: department, Author: author, Detail: fmt.Sprintf("%s department confirmed cue sequence", department), At: s.now()}, s.policy)
 	if err != nil {
 		return ReviewResponse{}, err
@@ -56,16 +53,21 @@ func (s *Service) Review(show string, department model.Department, author string
 }
 
 func (s *Service) ReviewAll(show string) (model.Run, error) {
+	id := RunID(show)
 	for _, department := range s.policy.RequiredDepartments {
 		for {
-			response, err := s.Review(show, department, "department-lead")
+			current, err := s.store.Read(id)
 			if err != nil {
 				return model.Run{}, err
 			}
-			if response.Remaining == 0 {
+			accepted, total := engine.ReviewCoverage(current, department)
+			if accepted >= total {
 				break
+			}
+			if _, err := s.Review(show, department, "department-lead"); err != nil {
+				return model.Run{}, err
 			}
 		}
 	}
-	return s.store.Read(RunID(show))
+	return s.store.Read(id)
 }
