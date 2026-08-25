@@ -1,24 +1,46 @@
 {
-  "shape": "cli",
-  "cli": {
-    "command": "go run ./cmd/cuebook compose --show lantern --director Mira",
-    "expect_output": "rehearsal composed"
+  "shape": "backend",
+  "service": {
+    "command": "PORT=18095 go run ./cmd/cuebook serve",
+    "health": {
+      "url": "http://127.0.0.1:18095/healthz",
+      "method": "GET",
+      "status": 200,
+      "contains": "healthy"
+    },
+    "api": {
+      "url": "http://127.0.0.1:18095/runs",
+      "method": "POST",
+      "body": "{\"show\":\"runtime-api\",\"director\":\"Mira\"}",
+      "status": 201,
+      "contains": "rehearsal composed"
+    },
+    "startup_timeout_seconds": 20
   },
   "workflow_checks": [
     {
       "workflow_id": "assemble-run",
-      "command": "go run ./cmd/cuebook compose --show lantern --director Mira",
-      "expect_output": "rehearsal composed"
+      "url": "http://127.0.0.1:18095/runs",
+      "method": "POST",
+      "body": "{\"show\":\"runtime-compose\",\"director\":\"Mira\"}",
+      "status": 201,
+      "contains": "rehearsal composed"
     },
     {
       "workflow_id": "review-cue",
-      "command": "go run ./cmd/cuebook review --show lantern --department sound",
-      "expect_output": "review accepted"
+      "url": "http://127.0.0.1:18095/reviews",
+      "method": "POST",
+      "body": "{\"show\":\"runtime-review\",\"department\":\"lighting\",\"author\":\"Lin\"}",
+      "status": 200,
+      "contains": "review accepted"
     },
     {
       "workflow_id": "publish-book",
-      "command": "go run ./cmd/cuebook publish --show lantern",
-      "expect_output": "cue book published"
+      "url": "http://127.0.0.1:18095/complete",
+      "method": "POST",
+      "body": "{\"show\":\"runtime-publish\",\"director\":\"Mira\"}",
+      "status": 200,
+      "contains": "cue book published"
     }
   ]
 }

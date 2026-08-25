@@ -26,3 +26,20 @@ go run ./cmd/cuebook publish --show lantern
 ```
 
 Build and test with `go build ./...` and `go test ./...`. The program uses deterministic built-in rehearsal material and does not require environment variables or remote services.
+
+## HTTP service
+
+The container-friendly service mode keeps one in-memory rehearsal workspace alive for API calls:
+
+```bash
+PORT=8080 go run ./cmd/cuebook serve
+curl -i http://127.0.0.1:8080/healthz
+curl -i -X POST http://127.0.0.1:8080/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"show":"lantern","director":"Mira"}'
+```
+
+- `GET /healthz` returns the service health response.
+- `POST /runs` assembles a rehearsal run from `show` and `director`.
+- `POST /reviews` accepts a review from `show`, `department`, and optional `author`.
+- `POST /complete` assembles, reviews, and publishes a run from `show` and optional `director`.

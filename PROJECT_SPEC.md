@@ -38,4 +38,4 @@
 
 ## 接口与验证
 
-公开入口是 `cuebook compose`、`cuebook review`、`cuebook publish` 与 `cuebook inspect`。compose 验证建模和规划，review 验证部门决策与审计记录，publish 验证就绪度规则和发布摘要。公开 Go 测试覆盖运行组装、复核与发布边界，运行清单逐项运行三个工作流。
+公开 HTTP 入口是 `POST /runs`、`POST /reviews`、`POST /complete` 与 `GET /healthz`；`POST /complete` 会组装运行、完成必要复核并发布摘要。命令行入口 `cuebook compose`、`cuebook review`、`cuebook publish` 与 `cuebook inspect` 仍保留，用于本地操作。运行清单通过 HTTP 状态码和响应内容逐项验证三个工作流。
