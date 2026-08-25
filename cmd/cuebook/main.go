@@ -34,7 +34,7 @@ func run(args []string) error {
 	case "complete":
 		return complete(service, args[1:])
 	case "serve":
-		return serve(args[1:])
+		return serve(service, args[1:])
 	default:
 		return fmt.Errorf("unknown command %s", args[0])
 	}
