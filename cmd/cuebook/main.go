@@ -19,7 +19,7 @@ func main() {
 }
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("expected compose, review, publish, inspect, or complete")
+		return fmt.Errorf("expected compose, review, publish, inspect, complete, or serve")
 	}
 	service := app.NewDemoService()
 	switch args[0] {
@@ -33,6 +33,8 @@ func run(args []string) error {
 		return inspect(service, args[1:])
 	case "complete":
 		return complete(service, args[1:])
+	case "serve":
+		return serve(args[1:])
 	default:
 		return fmt.Errorf("unknown command %s", args[0])
 	}
