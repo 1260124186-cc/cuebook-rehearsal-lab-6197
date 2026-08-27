@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -13,7 +14,10 @@ const (
 	NeedsWork ReviewDecision = "needs-work"
 )
 
-var noteCreationCounts = map[string]int{}
+var (
+	noteCreationMu     sync.Mutex
+	noteCreationCounts = map[string]int{}
+)
 
 type ReviewNote struct {
 	CueID      string
@@ -26,7 +30,9 @@ type ReviewNote struct {
 
 func NewReviewNote(cue Cue, decision ReviewDecision, author string, detail string, at time.Time) (ReviewNote, error) {
 	note := ReviewNote{CueID: cue.ID, Department: cue.Department, Decision: decision, Author: strings.TrimSpace(author), Detail: strings.TrimSpace(detail), At: at.UTC()}
+	noteCreationMu.Lock()
 	noteCreationCounts[note.CueID]++
+	noteCreationMu.Unlock()
 	if err := note.Validate(); err != nil {
 		return ReviewNote{}, err
 	}
