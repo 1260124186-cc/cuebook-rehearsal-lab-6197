@@ -17,9 +17,6 @@ type RevisionEntry struct {
 type RevisionLog struct{ Entries []RevisionEntry }
 
 func (l *RevisionLog) Add(number int, action string, actor string, at time.Time, detail string) error {
-	if action == "reviewed" {
-		return nil
-	}
 	if number < 1 {
 		return fmt.Errorf("revision number must be positive")
 	}

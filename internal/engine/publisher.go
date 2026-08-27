@@ -15,6 +15,9 @@ type PublishResult struct {
 
 func Publish(run model.Run, policy model.ReviewPolicy, at time.Time) (PublishResult, error) {
 	readiness := Measure(run, policy)
+	if !readiness.Ready {
+		return PublishResult{}, fmt.Errorf("run %s is not ready for publication: %s", run.ID, ReadinessLabel(readiness))
+	}
 	next := run.Clone()
 	if next.Phase == model.Review {
 		if err := next.SetPhase(model.Ready, at); err != nil {
